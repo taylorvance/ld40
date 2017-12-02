@@ -13,9 +13,43 @@ var ctx = canvas.getContext('2d');
 Vehicle.prototype.color = '#ccc';
 Vehicle.prototype.size = 2;
 Vehicle.prototype.draw = function() {
+	drawTriangle(this.position, this.size, this.velocity.angle2(new Vector(1, 0)), this.color);
+	//ctx.save();
+	//ctx.fillStyle = this.color;
+	//ctx.fillRect(this.position.x-this.size/2, this.position.y-this.size/2, this.size, this.size);
+	//ctx.restore();
+};
+
+// draw helpers
+var drawTriangle = function(center, radius, angle, color) {
 	ctx.save();
-	ctx.fillStyle = this.color;
-	ctx.fillRect(this.position.x-this.size/2, this.position.y-this.size/2, this.size, this.size);
+	ctx.translate(center.x, center.y);
+	ctx.rotate(angle);
+	ctx.beginPath();
+	ctx.moveTo(0, -radius);
+	ctx.lineTo(radius/2, radius/2);
+	ctx.lineTo(-radius/2, radius/2);
+	ctx.lineTo(0, -radius);
+	//ctx.stroke();
+	ctx.fillStyle = color || '#000';
+	ctx.fill();
+	ctx.restore();
+};
+var drawHexagon = function(center, radius, angle, color) {
+	ctx.save();
+	ctx.translate(center.x, center.y);
+	ctx.rotate(parseInt(angle));
+	ctx.beginPath();
+	ctx.moveTo(radius, 0);
+	ctx.lineTo(radius/2, -0.866*radius);
+	ctx.lineTo(-radius/2, -0.866*radius);
+	ctx.lineTo(-radius, 0);
+	ctx.lineTo(-radius/2, 0.866*radius);
+	ctx.lineTo(radius/2, 0.866*radius);
+	ctx.lineTo(radius, 0);
+	//ctx.stroke();
+	ctx.fillStyle = color || '#000';
+	ctx.fill();
 	ctx.restore();
 };
 
@@ -73,18 +107,21 @@ Dragon.prototype.maxCoins = 5;
 Dragon.prototype.draw = function(){
 	ctx.save();
 
+	var rotation = this.velocity.angle2(new Vector(1, 0));
 	if(this.isMad) {
-		var madSize = 1.2 * this.size;
-		ctx.fillStyle = '#f00';
-	ctx.fillRect(this.position.x-madSize/2, this.position.y-madSize/2, madSize, madSize);
+		var madSize = 1.5 * this.size;
+		//ctx.fillRect(this.position.x-madSize/2, this.position.y-madSize/2, madSize, madSize);
+		drawTriangle(this.position, madSize, rotation, '#f00');
 	}
 
-	ctx.fillStyle = this.color;
-	ctx.fillRect(this.position.x-this.size/2, this.position.y-this.size/2, this.size, this.size);
+	//ctx.fillStyle = this.color;
+	//ctx.fillRect(this.position.x-this.size/2, this.position.y-this.size/2, this.size, this.size);
+	drawTriangle(this.position, this.size, rotation, this.color);
 
-	var yellowSize = 0.8 * (this.size * this.num_coins / this.maxCoins);
-	ctx.fillStyle = '#ff0';
-	ctx.fillRect(this.position.x-yellowSize/2, this.position.y-yellowSize/2, yellowSize, yellowSize);
+	var yellowSize = 0.8 * (this.size/2 * this.num_coins / this.maxCoins);
+	drawHexagon(this.position, yellowSize, rotation, '#ff0');
+	//ctx.fillStyle = '#ff0';
+	//ctx.fillRect(this.position.x-yellowSize/2, this.position.y-yellowSize/2, yellowSize, yellowSize);
 
 	ctx.restore();
 };
@@ -225,6 +262,7 @@ Sandbox.addUpdateFunction(function(){
 			}
 			dragon.isMad = true;
 			force = force.add(dragon.pursue(player).scale(9));
+			//force = force.add(dragon.seek(player.position).scale(3));//this might make it a little too hard
 		} else {
 			dragon.isMad = false;
 		}
@@ -293,21 +331,24 @@ var updateGUI = function(){
 	scoreDiv.innerHTML = scoreText;
 };
 
-var coinSize = 8;
+var coinSize = 4;
 Sandbox.addUpdateFunction(function(){
+	ctx.save();
 	ctx.fillStyle = '#0ff';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	ctx.restore();
 
 	Sandbox.vehicles.forEach(function(v){
 		v.draw();
 	});
 
-	ctx.save();
-	ctx.fillStyle = '#ff0';
+	//ctx.save();
+	//ctx.fillStyle = '#ff0';
 	coins.forEach(function(coin){
-		ctx.fillRect(coin.x-coinSize/2, coin.y-coinSize/2, coinSize, coinSize);
+		//ctx.fillRect(coin.x-coinSize/2, coin.y-coinSize/2, coinSize, coinSize);
+		drawHexagon(coin, coinSize, 0, '#ff0');
 	});
-	ctx.restore();
+	//ctx.restore();
 });
 
 
