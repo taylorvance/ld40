@@ -70,12 +70,13 @@ Vehicle.prototype.findClosestCoin = function() {
 	return closeCoin;
 };
 Vehicle.prototype.gatherCoin = function(coin) {
-	if(typeof this.num_coins !== "number") this.num_coins = 0;
-	this.num_coins++;
+	if(typeof this.numCoins !== "number") this.numCoins = 0;
+	this.numCoins++;
 
 	for (var i=0, len=coins.length; i<len; i++) {
 		if (coins[i] === coin) {
 			coins.splice(i, 1);
+			updateGUI();
 			break;
 		}
 	}
@@ -103,7 +104,7 @@ var Dragon = Sandbox.extendVehicle("Dragon", {
 	color: '#0f0',
 	size: 32
 });
-Dragon.prototype.maxCoins = 5;
+Dragon.prototype.maxCoins = 10;
 Dragon.prototype.draw = function(){
 	ctx.save();
 
@@ -118,7 +119,7 @@ Dragon.prototype.draw = function(){
 	//ctx.fillRect(this.position.x-this.size/2, this.position.y-this.size/2, this.size, this.size);
 	drawTriangle(this.position, this.size, rotation, this.color);
 
-	var yellowSize = 0.8 * (this.size/2 * this.num_coins / this.maxCoins);
+	var yellowSize = 0.8 * (this.size/2 * this.numCoins / this.maxCoins);
 	drawHexagon(this.position, yellowSize, rotation, '#ff0');
 	//ctx.fillStyle = '#ff0';
 	//ctx.fillRect(this.position.x-yellowSize/2, this.position.y-yellowSize/2, yellowSize, yellowSize);
@@ -149,19 +150,19 @@ Dragon.spawnRandom = function(){
 	}
 
 	var dragon = Sandbox.createVehicle(Dragon, new Vector(x, y));
-	dragon.num_coins = 0;
+	dragon.numCoins = 0;
 
 	dragons.push(dragon);
 };
 var dragonsSlain = 0;
 Dragon.prototype.die = function(){
-	// drop twice as many coins as it's gathered
+	// drop coins
 	var radius = 3;
 	var xmin = this.position.x - this.size * radius;
 	var xmax = this.position.x + this.size * radius;
 	var ymin = this.position.y - this.size * radius;
 	var ymax = this.position.y + this.size * radius;
-	for (var i=0, len=parseInt(this.num_coins)*2; i<len; i++) {
+	for (var i=0, len=parseInt(this.numCoins); i<len; i++) {
 		var x = Math.random() * (xmax - xmin) + xmin;
 		var y = Math.random() * (ymax - ymin) + ymin;
 		spawnCoin(x, y);
@@ -186,7 +187,7 @@ Dragon.prototype.die = function(){
 
 // set up player
 var player = Sandbox.createVehicle(Player, new Vector(canvas.width / 2, canvas.height / 2));
-player.num_coins = 0;
+player.numCoins = 0;
 
 
 // input handling
@@ -197,18 +198,18 @@ canvas.addEventListener("click", function(event){
 	clickPos.y = event.clientY;
 });
 
-var arrows = new Vector;
+var movement = new Vector;
 window.addEventListener("keydown", function(e){
 	e = e || window.event;
-	if (e.keyCode == 37) arrows.x = -1;
-	else if(e.keyCode == 39) arrows.x = 1;
-	else if(e.keyCode == 38) arrows.y = -1;
-	else if(e.keyCode == 40) arrows.y = 1;
+	if (e.keyCode==37 || e.keyCode==65) movement.x = -1; // left or a
+	else if(e.keyCode==39 || e.keyCode==68) movement.x = 1; // right or d
+	else if(e.keyCode==38 || e.keyCode==87) movement.y = -1; // up or w
+	else if(e.keyCode==40 || e.keyCode==83) movement.y = 1; // down or s
 }, true);
 window.addEventListener("keyup", function(e){
 	e = e || window.event;
-	if (e.keyCode==37 || e.keyCode==39) arrows.x = 0;
-	else if(e.keyCode==38 || e.keyCode==40) arrows.y = 0;
+	if (e.keyCode==37 || e.keyCode==39 || e.keyCode==65 || e.keyCode==68) movement.x = 0;
+	else if(e.keyCode==38 || e.keyCode==40 || e.keyCode==87 || e.keyCode==83) movement.y = 0;
 }, true);
 
 
@@ -222,21 +223,22 @@ Sandbox.addUpdateFunction(function(){
 	var dt = Sandbox.deltaTime;
 
 	//player.applyForce(player.arrive(clickPos), dt);
-	player.applyForce(player.seek(player.position.add(arrows)), dt);
+	player.applyForce(player.seek(player.position.add(movement)), dt);
 
 	// collect coins
 	var closeCoin = player.findClosestCoin();
 	if(typeof closeCoin === "object" && closeCoin.sqrDist(player.position) < Math.pow(player.size,2)) {
 		player.gatherCoin(closeCoin);
-		updateGUI(); // update score
 
-		// spawn a new coin every time the player (but not a dragon) picks one up
+		// spawn a new coin every time the player picks one up
 		spawnCoin();
 
 		// spawn a dragon for every 5 coins gathered
-		if(player.num_coins % 5 === 0) {
+		if(player.numCoins % 5 === 0) {
 			Dragon.spawnRandom();
 		}
+
+		updateGUI(); // update score
 	}
 
 	// set bounds
@@ -262,23 +264,22 @@ Sandbox.addUpdateFunction(function(){
 			}
 			dragon.isMad = true;
 			force = force.add(dragon.pursue(player).scale(9));
-			//force = force.add(dragon.seek(player.position).scale(3));//this might make it a little too hard
 		} else {
 			dragon.isMad = false;
 		}
 
-		// seek coins if they don't have max
-		if(dragon.num_coins < dragon.maxCoins) {
-			if(typeof dragon.targetCoin !== "object") {
-				dragon.targetCoin = dragon.findClosestCoin();
-			}
-			if(typeof dragon.targetCoin === "object") {
-				if(dragon.targetCoin.sqrDist(dragon.position) < Math.pow(dragon.size, 2)) {
-					dragon.gatherCoin(dragon.targetCoin);
-					dragon.targetCoin = undefined;
-				}
-
-				force = force.add(dragon.arrive(dragon.targetCoin).scale(5));
+		// gather coins
+		if(typeof dragon.targetCoin !== "object") {
+			dragon.targetCoin = dragon.findClosestCoin();
+		}
+		if(typeof dragon.targetCoin === "object") {
+			if(dragon.targetCoin.sqrDist(dragon.position) < Math.pow(dragon.size, 2)) {
+				dragon.gatherCoin(dragon.targetCoin);
+				dragon.targetCoin = undefined;
+				updateGUI(); // update gold on field count
+			} else {
+				// seeks coins with less fervor the more coins it has
+				force = force.add(dragon.arrive(dragon.targetCoin).scale(Math.max(1, dragon.maxCoins - dragon.numCoins)));
 			}
 		}
 
@@ -294,7 +295,7 @@ Sandbox.addUpdateFunction(function(){
 		});
 
 		// slightly prefer center screen
-		force = force.add(dragon.arrive(new Vector(canvas.width/2, canvas.height/2)).scale(0.2));
+		force = force.add(dragon.arrive(new Vector(canvas.width/2, canvas.height/2)).scale(0.5));
 
 		dragon.applyForce(force, dt);
 	});
@@ -326,7 +327,8 @@ for (var i=0; i<50; i++) {
 var scoreDiv = document.getElementById('score');
 var scoreText = "";
 var updateGUI = function(){
-	scoreText = "Gold: " + player.num_coins;
+	scoreText = "Gold collected: " + player.numCoins;
+	scoreText += "<br>Gold on the field: " + coins.length;
 	scoreText += "<br>Dragons slain: " + dragonsSlain;
 	scoreDiv.innerHTML = scoreText;
 };

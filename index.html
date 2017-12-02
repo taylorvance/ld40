@@ -6,19 +6,52 @@
 	<title>TV LD40</title>
 
 	<link rel="stylesheet" href="style.css" type="text/css" media="screen" charset="utf-8">
+
+	<script charset="utf-8">
+		var showInstructions = true;
+		function toggleInstructions() {
+			showInstructions = !showInstructions;
+			if (showInstructions) {
+				document.getElementById("instructions").style.display = "block";
+			} else {
+				document.getElementById("instructions").style.display = "none";
+			}
+		}
+		document.addEventListener("DOMContentLoaded", function(event) {
+			toggleInstructions();
+		});
+	</script>
 </head>
 <body>
 	<canvas id="canvas"></canvas>
 
 	<div id="gui">
 		<div>
-			<button onclick="Sandbox.play()">play</button>
-			<button onclick="Sandbox.pause()">pause</button>
+			<button onclick="Sandbox.play()">Play</button>
+			<button onclick="Sandbox.pause()">Pause</button>
 		</div>
 
 		<div id="score"></div>
 
 		<button onclick="Dragon.spawnRandom()">spawn dragon<br>(aka sadist mode)</button>
+
+		<br><br>
+		<button onclick="toggleInstructions()">Instructions</button>
+		<br>
+		<div id="instructions">
+			You: magenta<br>
+			Controls: arrow keys or wasd<br>
+			Enemy: green (dragons)<br>
+			Goal: gold<br>
+			<br>
+
+			If a dragon sees you, it turns red in pursuit.<br>
+			<b>If a dragon touches you, game over.</b><br>
+			Gold respawns when you collect it and occasionally spawns randomly.<br>
+			Dragons love gold. They will compete with you for it.<br>
+			<b>If dragons collect the last gold, game over.</b><br>
+			If two dragons touch, they die and <b>drop their gold</b>.<br>
+		</div>
 	</div>
 
 	<script src="bundle.js"></script>
