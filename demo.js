@@ -10,7 +10,6 @@ var ctx = canvas.getContext('2d');
 
 
 // default vehicle render code
-
 Vehicle.prototype.color = '#ccc';
 Vehicle.prototype.size = 2;
 Vehicle.prototype.draw = function() {
@@ -18,6 +17,34 @@ Vehicle.prototype.draw = function() {
 	ctx.fillStyle = this.color;
 	ctx.fillRect(this.position.x-this.size/2, this.position.y-this.size/2, this.size, this.size);
 	ctx.restore();
+};
+
+
+// additional code for locating and gathering coins (player and dragon)
+Vehicle.prototype.findClosestCoin = function() {
+	var minSqrD = Infinity;
+	var closeCoin;
+
+	coins.forEach(function(coin){
+		var sqrD = this.position.sqrDist(coin);
+		if(sqrD < minSqrD) {
+			minSqrD = sqrD;
+			closeCoin = coin;
+		}
+	}, this);
+
+	return closeCoin;
+};
+Vehicle.prototype.gatherCoin = function(coin) {
+	for (var i=0, len=coins.length; i<len; i++) {
+		if (coins[i] === coin) {
+			coins.splice(i, 1);
+			break;
+		}
+	}
+
+	if(typeof this.num_coins !== "number") this.num_coins = 0;
+	this.num_coins++;
 };
 
 
@@ -47,7 +74,9 @@ var Dragon = Sandbox.extendVehicle("Dragon", {
 // set up vehicle instances
 
 var player = Sandbox.createVehicle(Player, new Vector(canvas.width / 2, canvas.height / 2));
+player.num_coins = 0;
 
+//TODO: make them not spawn until wealthy (and move code to dragon spawner fn
 var dragons = [];
 for (var i=0; i<5; i++) {
 	dragons.push(Sandbox.createVehicle(Dragon, new Vector(Math.random() * canvas.width, Math.random() * canvas.height)));
@@ -78,13 +107,29 @@ window.addEventListener("keyup", function(e){
 
 
 // player logic
+var playerPadding = player.size * 0.8;
+var playerxmin = playerPadding;
+var playerxmax = canvas.width - playerPadding;
+var playerymin = playerPadding;
+var playerymax = canvas.height - playerPadding;
 Sandbox.addUpdateFunction(function(){
 	var dt = Sandbox.deltaTime;
 
 	//player.applyForce(player.arrive(clickPos), dt);
 	player.applyForce(player.seek(player.position.add(arrows)), dt);
 
-	//TODO: collect coins
+	// collect coins
+	var closeCoin = player.findClosestCoin();
+	if(typeof closeCoin === "object" && closeCoin.sqrDist(player.position) < Math.pow(player.size,2)) {
+		player.gatherCoin(closeCoin);
+		updateGUI();
+	}
+
+	// set bounds
+	if(player.position.x < playerxmin) player.position.x = playerxmin;
+	else if(player.position.x > playerxmax) player.position.x = playerxmax;
+	else if(player.position.y < playerymin) player.position.y = playerymin;
+	else if(player.position.y > playerymax) player.position.y = playerymax;
 });
 
 
@@ -98,22 +143,36 @@ Sandbox.addUpdateFunction(function(){
 		force = force.add(dragon.flock(dragon.neighbors(dragons), 6, 5, 4).scale(4));
 		force = force.add(dragon.pursue(player).scale(5));
 
-		dragon.applyForce(force, dt);
+		//TODO: find closest coin to player and go there (guard the money)
 
-		// wrap around canvas
-		//if(coin.position.x < 0) coin.position.x = canvas.width;
-		//else if(coin.position.x > canvas.width) coin.position.x = 0;
-		//else if(coin.position.y < 0) coin.position.y = canvas.height;
-		//else if(coin.position.y > canvas.height) coin.position.y = 0;
+		dragon.applyForce(force, dt);
 	});
 });
 
 
 // coin spawner
 var coins = [];
+
+var coinPadding = 20;
+var coinxmin = coinPadding;
+var coinxmax = canvas.width - coinPadding;
+var coinymin = coinPadding;
+var coinymax = canvas.height - coinPadding;
+var spawnCoin = function(x, y) {
+	x = x || Math.random() * (coinxmax - coinxmin) + coinxmin;
+	y = y || Math.random() * (coinymax - coinymin) + coinymin;
+	coins.push(new Vector(x, y));
+};
 for (var i=0; i<20; i++) {
-	coins.push(new Vector(Math.random() * canvas.width, Math.random() * canvas.height));
+	spawnCoin();
 }
+
+Sandbox.addUpdateFunction(function(){
+	var dt = Sandbox.deltaTime;
+});
+
+// dragon spawner
+var dragons = [];
 Sandbox.addUpdateFunction(function(){
 	var dt = Sandbox.deltaTime;
 });
@@ -121,6 +180,12 @@ Sandbox.addUpdateFunction(function(){
 
 // render code
 var coinSize = 8;
+
+var scoreDiv = document.getElementById('score');
+var updateGUI = function(){
+	scoreDiv.innerHTML = "Score: " + player.num_coins;
+};
+
 Sandbox.addUpdateFunction(function(){
 	ctx.fillStyle = '#0ff';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -140,3 +205,4 @@ Sandbox.addUpdateFunction(function(){
 
 // start the update loop when the page loads
 Sandbox.play();
+updateGUI();
