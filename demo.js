@@ -36,15 +36,15 @@ Vehicle.prototype.findClosestCoin = function() {
 	return closeCoin;
 };
 Vehicle.prototype.gatherCoin = function(coin) {
+	if(typeof this.num_coins !== "number") this.num_coins = 0;
+	this.num_coins++;
+
 	for (var i=0, len=coins.length; i<len; i++) {
 		if (coins[i] === coin) {
 			coins.splice(i, 1);
 			break;
 		}
 	}
-
-	if(typeof this.num_coins !== "number") this.num_coins = 0;
-	this.num_coins++;
 };
 
 
@@ -241,7 +241,9 @@ var coinymax = canvas.height - coinPadding;
 var spawnCoin = function(x, y) {
 	x = x || Math.random() * (coinxmax - coinxmin) + coinxmin;
 	y = y || Math.random() * (coinymax - coinymin) + coinymin;
-	coins.push(new Vector(x, y));
+	var coin = new Vector(x, y);
+	coins.push(coin);
+	return coin;
 };
 for (var i=0; i<50; i++) {
 	spawnCoin();
@@ -249,13 +251,13 @@ for (var i=0; i<50; i++) {
 
 
 // render code
-var coinSize = 8;
 
 var scoreDiv = document.getElementById('score');
 var updateGUI = function(){
 	scoreDiv.innerHTML = "Score: " + player.num_coins;
 };
 
+var coinSize = 8;
 Sandbox.addUpdateFunction(function(){
 	ctx.fillStyle = '#0ff';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -275,6 +277,11 @@ Sandbox.addUpdateFunction(function(){
 
 // more game code
 Sandbox.addUpdateFunction(function(){
+	// each second, there's a 5% chance a coin with spawn
+	if(Math.random() < 0.05 * Sandbox.deltaTime) {
+		spawnCoin();
+	}
+
 	if(coins.length <= 0) {
 		gameOver("Coins gone!");
 	}
