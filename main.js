@@ -1,5 +1,5 @@
-var Vector = require("/Users/decisiontoolbox/dev/steering/vector");//.
-var Vehicle = require("/Users/decisiontoolbox/dev/steering/vehicle");//.
+var Vector = require("vector-js");
+var Vehicle = require("vehicle-js");
 
 
 //.is there a better way to access this from front end and unit tests?
