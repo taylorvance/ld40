@@ -88,32 +88,6 @@ Dragon.prototype.draw = function(){
 
 	ctx.restore();
 };
-Dragon.prototype.die = function(){
-	// drop coins
-	var xmin = this.position.x-this.size*2;
-	var xmax = this.position.x+this.size*2;
-	var ymin = this.position.y-this.size*2;
-	var ymax = this.position.y+this.size*2;
-	for (var i=0, len=parseInt(this.num_coins); i<len; i++) {
-		var x = Math.random() * (xmax - xmin) + xmin;
-		var y = Math.random() * (ymax - ymin) + ymin;
-		spawnCoin(x, y);
-	}
-
-	// remove from dragons array
-	for (var i=0, len=dragons.length; i<len; i++) {
-		if (dragons[i] === this) {
-			dragons.splice(i, 1);
-			break;
-		}
-	}
-
-	// remove from Sandbox.vehicles array
-	Sandbox.destroyVehicle(this);
-
-	// celebrate
-	console.log('killed dragon' + i);
-};
 
 var dragons = [];
 var dragonMargin = 100;
@@ -141,6 +115,35 @@ Dragon.spawnRandom = function(){
 	dragon.num_coins = 0;
 
 	dragons.push(dragon);
+};
+var dragonsSlain = 0;
+Dragon.prototype.die = function(){
+	// drop twice as many coins as it's gathered
+	var radius = 3;
+	var xmin = this.position.x - this.size * radius;
+	var xmax = this.position.x + this.size * radius;
+	var ymin = this.position.y - this.size * radius;
+	var ymax = this.position.y + this.size * radius;
+	for (var i=0, len=parseInt(this.num_coins)*2; i<len; i++) {
+		var x = Math.random() * (xmax - xmin) + xmin;
+		var y = Math.random() * (ymax - ymin) + ymin;
+		spawnCoin(x, y);
+	}
+
+	// remove from dragons array
+	for (var i=0, len=dragons.length; i<len; i++) {
+		if (dragons[i] === this) {
+			dragons.splice(i, 1);
+			break;
+		}
+	}
+
+	// remove from Sandbox.vehicles array
+	Sandbox.destroyVehicle(this);
+
+	// celebrate
+	dragonsSlain++;
+	updateGUI();
 };
 
 
@@ -247,13 +250,8 @@ Sandbox.addUpdateFunction(function(){
 		dragons.forEach(function(dragon2){
 			if(dragon2 === dragon) return;
 			if(dragon.position.sqrDist(dragon2.position) < Math.pow(dragon.size/2, 2)) {
-				for (var i=0, len=dragons.length; i<len; i++) {
-					if (dragons[i] === dragon) {
-						dragon.die();
-					} else if (dragons[i] === dragon2) {
-						dragon2.die();
-					}
-				}
+				dragon.die();
+				dragon2.die();
 			}
 		});
 
@@ -288,8 +286,11 @@ for (var i=0; i<50; i++) {
 // render code
 
 var scoreDiv = document.getElementById('score');
+var scoreText = "";
 var updateGUI = function(){
-	scoreDiv.innerHTML = "Score: " + player.num_coins;
+	scoreText = "Gold: " + player.num_coins;
+	scoreText += "<br>Dragons slain: " + dragonsSlain;
+	scoreDiv.innerHTML = scoreText;
 };
 
 var coinSize = 8;
@@ -326,7 +327,7 @@ Sandbox.addUpdateFunction(function(){
 function gameOver(msg) {
 	msg = msg || "";
 	Sandbox.pause();
-	if(confirm("GAME OVER!\n" + msg + "\nScore: " + player.num_coins)) {
+	if(confirm("GAME OVER!\n" + msg + "\n" + scoreText.replace(/<br[^>]*>/gi, "\n"))) {
 		location.reload();
 	}
 }
