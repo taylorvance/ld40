@@ -16,7 +16,7 @@ Vehicle.prototype.size = 2;
 Vehicle.prototype.draw = function() {
 	ctx.save();
 	ctx.fillStyle = this.color;
-	ctx.fillRect(this.position.x, this.position.y, this.size, this.size);
+	ctx.fillRect(this.position.x-this.size/2, this.position.y-this.size/2, this.size, this.size);
 	ctx.restore();
 };
 
@@ -37,8 +37,8 @@ var Coin = Sandbox.extendVehicle("Coin", {
 	maxSpeed: 150,
 	maxForce: 5,
 	mass: 1,
-	perception: 100,
-	leeway: 50,
+	perception: 1000,
+	leeway: 500,
 	color: '#ff0',
 	size: 10
 });
@@ -74,19 +74,15 @@ canvas.addEventListener("click", function(event){
 var arrows = new Vector;
 window.addEventListener("keydown", function(e){
 	e = e || window.event;
-
-	var horizontal = 0;
-	var vertical = 0;
-
-	if (e.keyCode == 37) {
-		horizontal -= 1;
-	} else if(e.keyCode == 38) {
-		vertical -= 1;
-	} else if(e.keyCode == 39) {
-		horizontal += 1;
-	} else if(e.keyCode == 40) {
-		vertical += 1;
-	}
+	if (e.keyCode == 37) arrows.x = -1;
+	else if(e.keyCode == 39) arrows.x = 1;
+	else if(e.keyCode == 38) arrows.y = -1;
+	else if(e.keyCode == 40) arrows.y = 1;
+}, true);
+window.addEventListener("keyup", function(e){
+	e = e || window.event;
+	if (e.keyCode==37 || e.keyCode==39) arrows.x = 0;
+	else if(e.keyCode==38 || e.keyCode==40) arrows.y = 0;
 }, true);
 
 
@@ -94,7 +90,8 @@ window.addEventListener("keydown", function(e){
 Sandbox.addUpdateFunction(function(){
 	var dt = Sandbox.deltaTime;
 
-	player.applyForce(player.arrive(clickPos), dt);
+	//player.applyForce(player.arrive(clickPos), dt);
+	player.applyForce(player.seek(player.position.add(arrows)), dt);
 });
 
 
@@ -109,6 +106,12 @@ Sandbox.addUpdateFunction(function(){
 		force = force.add(coin.pursue(player).scale(2));
 
 		coin.applyForce(force, dt);
+
+		// wrap around canvas
+		if(coin.position.x < 0) coin.position.x = canvas.width;
+		else if(coin.position.x > canvas.width) coin.position.x = 0;
+		else if(coin.position.y < 0) coin.position.y = canvas.height;
+		else if(coin.position.y > canvas.height) coin.position.y = 0;
 	});
 });
 
