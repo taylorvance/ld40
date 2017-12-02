@@ -20,6 +20,17 @@
 		document.addEventListener("DOMContentLoaded", function(event) {
 			toggleInstructions();
 		});
+
+		var song = new Audio('sounds/theme.m4a');
+		if(typeof song.loop == 'boolean') {
+			song.loop = true;
+		} else {
+			song.addEventListener('ended', function() {
+				this.currentTime = 0;
+				this.play();
+			}, false);
+		}
+		song.play();
 	</script>
 </head>
 <body>
