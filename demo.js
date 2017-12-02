@@ -62,13 +62,38 @@ var Player = Sandbox.extendVehicle("Player", {
 
 var Dragon = Sandbox.extendVehicle("Dragon", {
 	maxSpeed: 500,
-	maxForce: 3,
+	maxForce: 5,
 	mass: 1,
-	perception: 1000,
-	leeway: 100,
+	perception: 300,
+	leeway: 200,
 	color: '#0f0',
 	size: 32
 });
+
+var dragons = [];
+var dragonMargin = 100;
+Dragon.spawnRandom = function(){
+	var x, y;
+	if(Math.random() < 0.25) {
+		// top
+		x = Math.random() * canvas.width;
+		y = -dragonMargin;
+	} else if(Math.random() < 0.5) {
+		// bottom
+		x = Math.random() * canvas.width;
+		y = canvas.height + dragonMargin;
+	} else if(Math.random() < 0.75) {
+		// left
+		x = -dragonMargin;
+		y = Math.random() * canvas.height;
+	} else {
+		// right
+		x = canvas.width + dragonMargin;
+		y = Math.random() * canvas.height;
+	}
+
+	dragons.push(Sandbox.createVehicle(Dragon, new Vector(x, y)));
+};
 
 
 // set up vehicle instances
@@ -76,10 +101,9 @@ var Dragon = Sandbox.extendVehicle("Dragon", {
 var player = Sandbox.createVehicle(Player, new Vector(canvas.width / 2, canvas.height / 2));
 player.num_coins = 0;
 
-//TODO: make them not spawn until wealthy (and move code to dragon spawner fn
-var dragons = [];
+//TODO: make them not spawn until wealthy (and move code to dragon spawner fn)
 for (var i=0; i<5; i++) {
-	dragons.push(Sandbox.createVehicle(Dragon, new Vector(Math.random() * canvas.width, Math.random() * canvas.height)));
+	Dragon.spawnRandom();
 }
 
 
@@ -122,7 +146,10 @@ Sandbox.addUpdateFunction(function(){
 	var closeCoin = player.findClosestCoin();
 	if(typeof closeCoin === "object" && closeCoin.sqrDist(player.position) < Math.pow(player.size,2)) {
 		player.gatherCoin(closeCoin);
-		updateGUI();
+		updateGUI(); // update score
+		if(Math.random() < 0.9) { // chance of another coin spawning
+			spawnCoin();
+		}
 	}
 
 	// set bounds
@@ -140,10 +167,33 @@ Sandbox.addUpdateFunction(function(){
 	dragons.forEach(function(dragon){
 		var force = new Vector;
 
-		force = force.add(dragon.flock(dragon.neighbors(dragons), 6, 5, 4).scale(4));
-		force = force.add(dragon.pursue(player).scale(5));
+		// pursue player
+		var sqrD = dragon.position.sqrDist(player.position);
+		if(sqrD < Math.pow(dragon.perception, 2)) {
+			if(sqrD < Math.pow(dragon.size/2, 2)) {
+				gameOver("Dragon touched you!");
+			}
+			dragon.color = '#f00';//TODO: undo this hardcode
+			force = force.add(dragon.pursue(player).scale(9));
+		} else {
+			dragon.color = '#0f0';//TODO: undo this hardcode
+		}
 
-		//TODO: find closest coin to player and go there (guard the money)
+		// seek coins
+		if(typeof dragon.targetCoin !== "object") {
+			dragon.targetCoin = dragon.findClosestCoin();
+		}
+		if(typeof dragon.targetCoin === "object") {
+			if(dragon.targetCoin.sqrDist(dragon.position) < Math.pow(dragon.size,2)) {
+				dragon.gatherCoin(dragon.targetCoin);
+				dragon.targetCoin = undefined;
+			}
+
+			force = force.add(dragon.arrive(dragon.targetCoin).scale(5));
+		}
+
+		// separate from other dragons
+		force = force.add(dragon.separate(dragon.neighbors(dragons)).scale(5));
 
 		dragon.applyForce(force, dt);
 	});
@@ -172,7 +222,6 @@ Sandbox.addUpdateFunction(function(){
 });
 
 // dragon spawner
-var dragons = [];
 Sandbox.addUpdateFunction(function(){
 	var dt = Sandbox.deltaTime;
 });
@@ -201,6 +250,21 @@ Sandbox.addUpdateFunction(function(){
 	});
 	ctx.restore();
 });
+
+
+// more game code
+Sandbox.addUpdateFunction(function(){
+	if(coins.length <= 0) {
+		gameOver("Coins gone!");
+	}
+});
+
+
+function gameOver(msg) {
+	msg = msg || "";
+	Sandbox.pause();
+	alert("GAME OVER!\n" + msg + "\nScore: " + player.num_coins);//TODO: make some GUI for this
+}
 
 
 // start the update loop when the page loads
