@@ -88,11 +88,14 @@ var update = function() {
 
 
 var intervalID;
+Sandbox.isPlaying = false;
 Sandbox.play = function() {
 	Sandbox.pause();
 	lastUpdate = Date.now();
 	intervalID = setInterval(update, 1000/FPS);
+	Sandbox.isPlaying = true;
 };
 Sandbox.pause = function() {
 	clearInterval(intervalID);
+	Sandbox.isPlaying = false;
 };

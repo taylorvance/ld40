@@ -8,6 +8,15 @@
 	<link rel="stylesheet" href="style.css" type="text/css" media="screen" charset="utf-8">
 
 	<script charset="utf-8">
+		function toggleGame() {
+			if(Sandbox.isPlaying) Sandbox.pause();
+			else Sandbox.play();
+		}
+		window.addEventListener("keydown", function(e){
+			e = e || window.event;
+			if (e.keyCode==32) toggleGame(); // spacebar
+		}, true);
+
 		var showInstructions = true;
 		function toggleInstructions() {
 			showInstructions = !showInstructions;
@@ -31,6 +40,14 @@
 			}, false);
 		}
 		song.play();
+
+		var isPlaying = false;
+		function toggleSong() {
+			if (isPlaying) song.pause()
+			else song.play();
+		};
+		song.onplaying = function() { isPlaying = true; };
+		song.onpause = function() { isPlaying = false; };
 	</script>
 </head>
 <body>
@@ -38,9 +55,11 @@
 
 	<div id="gui">
 		<div>
-			<button onclick="Sandbox.play()">Play</button>
-			<button onclick="Sandbox.pause()">Pause</button>
+			<button onclick="toggleGame()">Play/Pause</button>
 		</div>
+
+		<br>
+		<button onclick="toggleSong()">Toggle music</button>
 
 		<div id="score"></div>
 
