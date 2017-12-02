@@ -53,6 +53,14 @@ Sandbox.createVehicle = function(vehicleSubclass, pos, vel) {
 
 	return vehicle;
 };
+Sandbox.destroyVehicle = function(vehicle) {
+	for (var i=0, len=Sandbox.vehicles.length; i<len; i++) {
+		if(Sandbox.vehicles[i] === vehicle) {
+			Sandbox.vehicles.splice(i, 1);
+			break;
+		}
+	}
+};
 
 
 var updateFns = [];

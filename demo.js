@@ -70,7 +70,7 @@ var Dragon = Sandbox.extendVehicle("Dragon", {
 	size: 32
 });
 Dragon.prototype.maxCoins = 5;
-Dragon.prototype.draw = function() {
+Dragon.prototype.draw = function(){
 	ctx.save();
 
 	if(this.isMad) {
@@ -87,6 +87,32 @@ Dragon.prototype.draw = function() {
 	ctx.fillRect(this.position.x-yellowSize/2, this.position.y-yellowSize/2, yellowSize, yellowSize);
 
 	ctx.restore();
+};
+Dragon.prototype.die = function(){
+	// drop coins
+	var xmin = this.position.x-this.size*2;
+	var xmax = this.position.x+this.size*2;
+	var ymin = this.position.y-this.size*2;
+	var ymax = this.position.y+this.size*2;
+	for (var i=0, len=parseInt(this.num_coins); i<len; i++) {
+		var x = Math.random() * (xmax - xmin) + xmin;
+		var y = Math.random() * (ymax - ymin) + ymin;
+		spawnCoin(x, y);
+	}
+
+	// remove from dragons array
+	for (var i=0, len=dragons.length; i<len; i++) {
+		if (dragons[i] === this) {
+			dragons.splice(i, 1);
+			break;
+		}
+	}
+
+	// remove from Sandbox.vehicles array
+	Sandbox.destroyVehicle(this);
+
+	// celebrate
+	console.log('killed dragon' + i);
 };
 
 var dragons = [];
@@ -203,27 +229,38 @@ Sandbox.addUpdateFunction(function(){
 		}
 
 		// seek coins if they don't have 5
-		if(dragon.num_coins < dragon.maxCoins) {//TODO: undo hardcode or nix the max coin concept
+		if(dragon.num_coins < dragon.maxCoins) {
 			if(typeof dragon.targetCoin !== "object") {
 				dragon.targetCoin = dragon.findClosestCoin();
 			}
 			if(typeof dragon.targetCoin === "object") {
-				if(dragon.targetCoin.sqrDist(dragon.position) < Math.pow(dragon.size,2)) {
+				if(dragon.targetCoin.sqrDist(dragon.position) < Math.pow(dragon.size/2, 2)) {
 					dragon.gatherCoin(dragon.targetCoin);
 					dragon.targetCoin = undefined;
 				}
 
 				force = force.add(dragon.arrive(dragon.targetCoin).scale(5));
 			}
-		//} else {
-			//dragon.color = '#af0';
 		}
-
-		// slightly prefer center screen
-		force = force.add(dragon.arrive(new Vector(canvas.width/2, canvas.height/2)).scale(0.5));
 
 		// separate from other dragons
 		force = force.add(dragon.separate(dragon.neighbors(dragons)).scale(5));
+		// if dragons get too close to each other, they die
+		dragons.forEach(function(dragon2){
+			if(dragon2 === dragon) return;
+			if(dragon.position.sqrDist(dragon2.position) < Math.pow(dragon.size/2, 2)) {
+				for (var i=0, len=dragons.length; i<len; i++) {
+					if (dragons[i] === dragon) {
+						dragon.die();
+					} else if (dragons[i] === dragon2) {
+						dragon2.die();
+					}
+				}
+			}
+		});
+
+		// slightly prefer center screen
+		force = force.add(dragon.arrive(new Vector(canvas.width/2, canvas.height/2)).scale(0.2));
 
 		dragon.applyForce(force, dt);
 	});
@@ -277,8 +314,8 @@ Sandbox.addUpdateFunction(function(){
 
 // more game code
 Sandbox.addUpdateFunction(function(){
-	// each second, there's a 5% chance a coin with spawn
-	if(Math.random() < 0.05 * Sandbox.deltaTime) {
+	// each second and for each dragon, there's a 5% chance a coin with spawn
+	if(Math.random() < 0.05 * dragons.length * Sandbox.deltaTime) {
 		spawnCoin();
 	}
 
@@ -291,7 +328,7 @@ Sandbox.addUpdateFunction(function(){
 function gameOver(msg) {
 	msg = msg || "";
 	Sandbox.pause();
-	alert("GAME OVER!\n" + msg + "\nScore: " + player.num_coins);//TODO: make some GUI for this
+	alert("GAME OVER!\n" + msg + "\nScore: " + player.num_coins);//TODO: make some GUI for this with a reset button
 }
 
 
