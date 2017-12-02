@@ -143,8 +143,6 @@ Dragon.spawnRandom = function(){
 	dragons.push(dragon);
 };
 
-Dragon.spawnRandom();//TODO: just for testing. delete this.
-
 
 // set up player
 var player = Sandbox.createVehicle(Player, new Vector(canvas.width / 2, canvas.height / 2));
@@ -228,13 +226,13 @@ Sandbox.addUpdateFunction(function(){
 			dragon.isMad = false;
 		}
 
-		// seek coins if they don't have 5
+		// seek coins if they don't have max
 		if(dragon.num_coins < dragon.maxCoins) {
 			if(typeof dragon.targetCoin !== "object") {
 				dragon.targetCoin = dragon.findClosestCoin();
 			}
 			if(typeof dragon.targetCoin === "object") {
-				if(dragon.targetCoin.sqrDist(dragon.position) < Math.pow(dragon.size/2, 2)) {
+				if(dragon.targetCoin.sqrDist(dragon.position) < Math.pow(dragon.size, 2)) {
 					dragon.gatherCoin(dragon.targetCoin);
 					dragon.targetCoin = undefined;
 				}
@@ -328,7 +326,9 @@ Sandbox.addUpdateFunction(function(){
 function gameOver(msg) {
 	msg = msg || "";
 	Sandbox.pause();
-	alert("GAME OVER!\n" + msg + "\nScore: " + player.num_coins);//TODO: make some GUI for this with a reset button
+	if(confirm("GAME OVER!\n" + msg + "\nScore: " + player.num_coins)) {
+		location.reload();
+	}
 }
 
 
