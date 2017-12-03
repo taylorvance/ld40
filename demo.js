@@ -37,7 +37,7 @@ var drawTriangle = function(center, radius, angle, color) {
 	ctx.lineTo(radius/2, radius/2);
 	ctx.lineTo(-radius/2, radius/2);
 	ctx.lineTo(0, -radius);
-	//ctx.stroke();
+	ctx.stroke();
 	ctx.fillStyle = color || '#000';
 	ctx.fill();
 	ctx.restore();
@@ -102,7 +102,8 @@ var Player = Sandbox.extendVehicle("Player", {
 	mass: 1,
 	perception: 500,
 	leeway: 50,
-	color: '#f0f',
+	//color: '#f0f',
+	color: '#00daff',
 	size: 16
 });
 
@@ -297,7 +298,7 @@ Sandbox.addUpdateFunction(function(){
 		if(sqrD < Math.pow(dragon.perception, 2)) {
 			if(sqrD < Math.pow(dragon.size/2, 2)) {
 				var sfx = new Audio('sounds/dragon-cry.m4a');
-				sfx.volume = 0.3;
+				sfx.volume = 0.5;
 				sfx.play();
 
 				gameOver("Dragon touched you!");
@@ -317,9 +318,9 @@ Sandbox.addUpdateFunction(function(){
 				dragon.gatherCoin(dragon.targetCoin);
 				dragon.targetCoin = undefined;
 
-				var sfx = new Audio('sounds/coin2.m4a');
-				sfx.volume = 0.1;
-				sfx.play();
+				//var sfx = new Audio('sounds/coin2.m4a');
+				//sfx.volume = 0.1;
+				//sfx.play();
 
 				updateGUI(); // update gold on field count
 			} else {
@@ -380,7 +381,9 @@ var updateGUI = function(){
 var coinSize = 4;
 Sandbox.addUpdateFunction(function(){
 	ctx.save();
-	ctx.fillStyle = '#0ff';
+	//ctx.fillStyle = '#0ff';
+	//ctx.fillStyle = '#99c778';
+	ctx.fillStyle = '#38b026';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.restore();
 
