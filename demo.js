@@ -59,6 +59,16 @@ var drawHexagon = function(center, radius, angle, color) {
 	ctx.fill();
 	ctx.restore();
 };
+var drawCircle = function(center, radius, color) {
+	ctx.save();
+	//ctx.translate(center.x, center.y);
+	ctx.beginPath();
+	ctx.arc(center.x, center.y, radius, 0, 2*Math.PI, false);
+	ctx.stroke();
+	ctx.fillStyle = color || '#000';
+	ctx.fill();
+	ctx.restore();
+};
 
 
 // additional code for locating and gathering coins (player and dragon)
@@ -116,7 +126,6 @@ var Dragon = Sandbox.extendVehicle("Dragon", {
 	color: '#0f0',
 	size: 32
 });
-Dragon.prototype.maxCoins = 10;
 var dragonImg = new Image();
 dragonImg.src = 'art/dragon.png';
 var madDragonImg = new Image();
@@ -137,12 +146,14 @@ Dragon.prototype.draw = function(){
 	//drawTriangle(this.position, this.size, rotation, this.color);
 
 	// draw hoard
-	var yellowSize = 0.8 * (this.size/2 * this.numCoins / this.maxCoins);
-	drawHexagon(this.position, yellowSize, rotation, '#ff0');
+	var yellowSize = coinSize * Math.sqrt(this.numCoins / Math.PI)
+	//drawCircle(this.position.sub(this.velocity.setMagnitude(this.size+yellowSize)), yellowSize, '#ff0');
+	drawCircle(this.position, yellowSize, '#ff0');
+	//drawHexagon(this.position, yellowSize, rotation, '#ff0');
 	//for (var i=0; i<this.numCoins; i++) {
-		//var x = Math.random() * (this.position.x+10 - this.position.x-10) + this.position.x-10;
-		//var y = Math.random() * (this.position.y+10 - this.position.y-10) + this.position.y-10;
-		//drawHexagon(new Vector(x, y), coinSize, rotation, '#ff0');
+		//var x = Math.random() * 20 - 10;
+		//var y = Math.random() * 20 - 10;
+		//drawHexagon(new Vector(this.position.x+x, this.position.y+y), coinSize, rotation, '#ff0');
 	//}
 };
 
@@ -325,6 +336,7 @@ Sandbox.addUpdateFunction(function(){
 				updateGUI(); // update gold on field count
 			} else {
 				force = force.add(dragon.arrive(dragon.targetCoin).scale(3));
+				force = force.add(dragon.seek(dragon.targetCoin).scale(1));
 			}
 		}
 
