@@ -8,15 +8,22 @@
 	<link rel="stylesheet" href="style.css" type="text/css" media="screen" charset="utf-8">
 
 	<script charset="utf-8">
+		// play/pause
 		function toggleGame() {
-			if(Sandbox.isPlaying) Sandbox.pause();
-			else Sandbox.play();
+			if(Sandbox.isPlaying) {
+				Sandbox.pause();
+				//song.pause();
+			} else {
+				Sandbox.play();
+				//song.play();
+			}
 		}
 		window.addEventListener("keydown", function(e){
 			e = e || window.event;
 			if (e.keyCode==32) toggleGame(); // spacebar
 		}, true);
 
+		// instructions
 		var showInstructions = true;
 		function toggleInstructions() {
 			showInstructions = !showInstructions;
@@ -30,6 +37,7 @@
 			toggleInstructions();
 		});
 
+		// music
 		var song = new Audio('sounds/theme.m4a');
 		if(typeof song.loop == 'boolean') {
 			song.loop = true;
@@ -39,7 +47,7 @@
 				this.play();
 			}, false);
 		}
-		//song.play();
+		song.play();
 
 		var isPlaying = false;
 		function toggleSong() {

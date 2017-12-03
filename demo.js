@@ -157,6 +157,12 @@ Dragon.spawnRandom = function(){
 	dragon.numCoins = 0;
 
 	dragons.push(dragon);
+
+	var sfx = new Audio('sounds/dragon-growl.m4a');
+	sfx.volume = 0.2;
+	sfx.play();
+
+	return dragon;
 };
 var dragonsSlain = 0;
 Dragon.prototype.die = function(){
@@ -182,6 +188,11 @@ Dragon.prototype.die = function(){
 			break;
 		}
 	}
+
+	// roar
+	var sfx = new Audio('sounds/dragon-roar.m4a');
+	sfx.volume = 0.3;
+	sfx.play();
 
 	// remove from Sandbox.vehicles array
 	Sandbox.destroyVehicle(this);
@@ -237,6 +248,10 @@ Sandbox.addUpdateFunction(function(){
 	if(typeof closeCoin === "object" && closeCoin.sqrDist(player.position) < Math.pow(player.size,2)) {
 		player.gatherCoin(closeCoin);
 
+		var sfx = new Audio('sounds/coin.m4a');
+		sfx.volume = 0.1;
+		sfx.play();
+
 		// 90% chance of spawning a new coin every time the player picks one up
 		if(Math.random() < 0.9) spawnCoin();
 
@@ -267,6 +282,10 @@ Sandbox.addUpdateFunction(function(){
 		var sqrD = dragon.position.sqrDist(player.position);
 		if(sqrD < Math.pow(dragon.perception, 2)) {
 			if(sqrD < Math.pow(dragon.size/2, 2)) {
+				var sfx = new Audio('sounds/dragon-cry.m4a');
+				sfx.volume = 0.3;
+				sfx.play();
+
 				gameOver("Dragon touched you!");
 			}
 			dragon.isMad = true;
@@ -283,6 +302,11 @@ Sandbox.addUpdateFunction(function(){
 			if(dragon.targetCoin.sqrDist(dragon.position) < Math.pow(dragon.size, 2)) {
 				dragon.gatherCoin(dragon.targetCoin);
 				dragon.targetCoin = undefined;
+
+				var sfx = new Audio('sounds/coin2.m4a');
+				sfx.volume = 0.1;
+				sfx.play();
+
 				updateGUI(); // update gold on field count
 			} else {
 				force = force.add(dragon.arrive(dragon.targetCoin).scale(3));
