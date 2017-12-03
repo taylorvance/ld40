@@ -2,6 +2,12 @@ var Vector = Sandbox.Vector;
 var Vehicle = Sandbox.Vehicle;
 
 
+// some variables
+var CHANCE_OF_GOLD_RESPAWN_AFTER_PLAYER_COLLECTS_ONE = 0.5;
+var PERCENT_OF_DRAGON_HOARD_RECOVERABLE = 1;
+var CHANCE_OF_GOLD_RANDOMLY_SPAWNING_PER_DRAGON_PER_SECOND = 0.05;
+
+
 // set up html canvas
 var canvas = document.getElementById('canvas');
 canvas.width = document.documentElement.clientWidth;
@@ -188,6 +194,8 @@ Dragon.spawnRandom = function(){
 	sfx.volume = 0.2;
 	sfx.play();
 
+	updateGUI(); // update count of dragons on board
+
 	return dragon;
 };
 var dragonsSlain = 0;
@@ -199,8 +207,8 @@ Dragon.prototype.die = function(){
 	var ymin = this.position.y - this.size * radius;
 	var ymax = this.position.y + this.size * radius;
 	for (var i=0, len=parseInt(this.numCoins); i<len; i++) {
-		// on avg, drop 90% of the coins
-		if(Math.random() < 0.9) {
+		// on avg, drop this percentage of coins
+		if(Math.random() < PERCENT_OF_DRAGON_HOARD_RECOVERABLE) {
 			var x = Math.random() * (xmax - xmin) + xmin;
 			var y = Math.random() * (ymax - ymin) + ymin;
 			spawnCoin(x, y);
@@ -278,8 +286,8 @@ Sandbox.addUpdateFunction(function(){
 		sfx.volume = 0.1;
 		sfx.play();
 
-		// 90% chance of spawning a new coin every time the player picks one up
-		if(Math.random() < 0.9) spawnCoin();
+		// chance of spawning a new coin every time the player picks one up
+		if(Math.random() < CHANCE_OF_GOLD_RESPAWN_AFTER_PLAYER_COLLECTS_ONE) spawnCoin();
 
 		// spawn a dragon for every 5 coins gathered
 		if(player.numCoins % 5 === 0) {
@@ -312,7 +320,7 @@ Sandbox.addUpdateFunction(function(){
 				sfx.volume = 0.5;
 				sfx.play();
 
-				gameOver("Dragon touched you!");
+				gameOver("Dragon destroyed you!");
 			}
 			dragon.isMad = true;
 			force = force.add(dragon.pursue(player).scale(8));
@@ -385,12 +393,14 @@ var scoreDiv = document.getElementById('score');
 var scoreText = "";
 var updateGUI = function(){
 	scoreText = "Gold collected: " + player.numCoins;
-	scoreText += "<br>Gold on the field: " + coins.length;
+	scoreText += "<br>Gold remaining: " + coins.length;
 	scoreText += "<br>Dragons slain: " + dragonsSlain;
+	scoreText += "<br>Dragons alive: " + dragons.length;
 	scoreDiv.innerHTML = scoreText;
 };
 
 var coinSize = 4;
+var asdf = 0;
 Sandbox.addUpdateFunction(function(){
 	ctx.save();
 	//ctx.fillStyle = '#0ff';
@@ -410,13 +420,10 @@ Sandbox.addUpdateFunction(function(){
 		drawHexagon(coin, coinSize, 0, '#ff0');
 	});
 	//ctx.restore();
-});
 
-
-// more game code
-Sandbox.addUpdateFunction(function(){
-	// on avg, for each second, for each dragon, there's a 1% chance a coin will spawn
-	if(Math.random() < 0.01 * dragons.length * Sandbox.deltaTime) {
+	// perhaps spawn a random coin
+	// there's a chance of gold randomly spawning for each dragon per second
+	if(Math.random() < CHANCE_OF_GOLD_RANDOMLY_SPAWNING_PER_DRAGON_PER_SECOND * dragons.length * Sandbox.deltaTime) {
 		spawnCoin();
 	}
 });
