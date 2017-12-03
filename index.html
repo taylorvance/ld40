@@ -39,11 +39,11 @@
 				this.play();
 			}, false);
 		}
-		song.play();
+		//song.play();
 
 		var isPlaying = false;
 		function toggleSong() {
-			if (isPlaying) song.pause()
+			if(isPlaying) song.pause()
 			else song.play();
 		};
 		song.onplaying = function() { isPlaying = true; };
@@ -76,11 +76,11 @@
 			<br>
 
 			If a dragon sees you, it turns red in pursuit.<br>
-			<b>If a dragon touches you, game over.</b><br>
-			Gold respawns when you collect it and occasionally spawns randomly.<br>
+			<b>If a dragon gets too close to you, game over.</b><br>
+			Gold occasionally respawns randomly and often right after collecting one.<br>
 			Dragons love gold. They will compete with you for it.<br>
 			<b>If dragons collect the last gold, game over.</b><br>
-			If two dragons touch, they die and <b>drop their gold</b>.<br>
+			If two dragons get too close, they die and <b>drop some of their gold</b>.<br>
 		</div>
 	</div>
 

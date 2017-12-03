@@ -80,6 +80,10 @@ Vehicle.prototype.gatherCoin = function(coin) {
 			break;
 		}
 	}
+
+	if(coins.length <= 0) {
+		gameOver("Coins gone!");
+	}
 };
 
 
@@ -106,25 +110,25 @@ var Dragon = Sandbox.extendVehicle("Dragon", {
 });
 Dragon.prototype.maxCoins = 10;
 Dragon.prototype.draw = function(){
-	ctx.save();
-
 	var rotation = this.velocity.angle2(new Vector(1, 0));
+
+	// draw mad red outline
 	if(this.isMad) {
 		var madSize = 1.5 * this.size;
-		//ctx.fillRect(this.position.x-madSize/2, this.position.y-madSize/2, madSize, madSize);
 		drawTriangle(this.position, madSize, rotation, '#f00');
 	}
 
-	//ctx.fillStyle = this.color;
-	//ctx.fillRect(this.position.x-this.size/2, this.position.y-this.size/2, this.size, this.size);
+	// draw regular green dragon
 	drawTriangle(this.position, this.size, rotation, this.color);
 
+	// draw hoard
 	var yellowSize = 0.8 * (this.size/2 * this.numCoins / this.maxCoins);
 	drawHexagon(this.position, yellowSize, rotation, '#ff0');
-	//ctx.fillStyle = '#ff0';
-	//ctx.fillRect(this.position.x-yellowSize/2, this.position.y-yellowSize/2, yellowSize, yellowSize);
-
-	ctx.restore();
+	//for (var i=0; i<this.numCoins; i++) {
+		//var x = Math.random() * (this.position.x+10 - this.position.x-10) + this.position.x-10;
+		//var y = Math.random() * (this.position.y+10 - this.position.y-10) + this.position.y-10;
+		//drawHexagon(new Vector(x, y), coinSize, rotation, '#ff0');
+	//}
 };
 
 var dragons = [];
@@ -163,9 +167,12 @@ Dragon.prototype.die = function(){
 	var ymin = this.position.y - this.size * radius;
 	var ymax = this.position.y + this.size * radius;
 	for (var i=0, len=parseInt(this.numCoins); i<len; i++) {
-		var x = Math.random() * (xmax - xmin) + xmin;
-		var y = Math.random() * (ymax - ymin) + ymin;
-		spawnCoin(x, y);
+		// on avg, drop 90% of the coins
+		if(Math.random() < 0.9) {
+			var x = Math.random() * (xmax - xmin) + xmin;
+			var y = Math.random() * (ymax - ymin) + ymin;
+			spawnCoin(x, y);
+		}
 	}
 
 	// remove from dragons array
@@ -230,8 +237,8 @@ Sandbox.addUpdateFunction(function(){
 	if(typeof closeCoin === "object" && closeCoin.sqrDist(player.position) < Math.pow(player.size,2)) {
 		player.gatherCoin(closeCoin);
 
-		// spawn a new coin every time the player picks one up
-		spawnCoin();
+		// 90% chance of spawning a new coin every time the player picks one up
+		if(Math.random() < 0.9) spawnCoin();
 
 		// spawn a dragon for every 5 coins gathered
 		if(player.numCoins % 5 === 0) {
@@ -263,7 +270,7 @@ Sandbox.addUpdateFunction(function(){
 				gameOver("Dragon touched you!");
 			}
 			dragon.isMad = true;
-			force = force.add(dragon.pursue(player).scale(9));
+			force = force.add(dragon.pursue(player).scale(8));
 		} else {
 			dragon.isMad = false;
 		}
@@ -278,17 +285,16 @@ Sandbox.addUpdateFunction(function(){
 				dragon.targetCoin = undefined;
 				updateGUI(); // update gold on field count
 			} else {
-				// seeks coins with less fervor the more coins it has
-				force = force.add(dragon.arrive(dragon.targetCoin).scale(Math.max(1, dragon.maxCoins - dragon.numCoins)));
+				force = force.add(dragon.arrive(dragon.targetCoin).scale(3));
 			}
 		}
 
 		// separate from other dragons
-		force = force.add(dragon.separate(dragon.neighbors(dragons)).scale(5));
+		force = force.add(dragon.separate(dragon.neighbors(dragons)).scale(4));
 		// if dragons get too close to each other, they die
 		dragons.forEach(function(dragon2){
 			if(dragon2 === dragon) return;
-			if(dragon.position.sqrDist(dragon2.position) < Math.pow(dragon.size/2, 2)) {
+			if(dragon.position.sqrDist(dragon2.position) < Math.pow(dragon.size*0.75, 2)) {
 				dragon.die();
 				dragon2.die();
 			}
@@ -356,13 +362,9 @@ Sandbox.addUpdateFunction(function(){
 
 // more game code
 Sandbox.addUpdateFunction(function(){
-	// each second and for each dragon, there's a 5% chance a coin with spawn
-	if(Math.random() < 0.05 * dragons.length * Sandbox.deltaTime) {
+	// on avg, for each second, for each dragon, there's a 1% chance a coin will spawn
+	if(Math.random() < 0.01 * dragons.length * Sandbox.deltaTime) {
 		spawnCoin();
-	}
-
-	if(coins.length <= 0) {
-		gameOver("Coins gone!");
 	}
 });
 
