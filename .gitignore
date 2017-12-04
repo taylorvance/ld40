@@ -3,3 +3,5 @@ bundle.js
 *.un~
 *.swp
 *.swo
+.DS_Store
+*.m4a

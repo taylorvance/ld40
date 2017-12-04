@@ -3,65 +3,91 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width" />
-	<title>TV Steer</title>
+	<title>TV LD40</title>
 
 	<link rel="stylesheet" href="style.css" type="text/css" media="screen" charset="utf-8">
 
 	<script charset="utf-8">
-		var showMenu = true;
-		function toggleMenu() {
-			showMenu = !showMenu;
-			if (showMenu) {
-				document.getElementById("my-sidemenu").style.display = "block";
+		// play/pause
+		function toggleGame() {
+			if(Sandbox.isPlaying) {
+				Sandbox.pause();
+				//song.pause();
 			} else {
-				document.getElementById("my-sidemenu").style.display = "none";
+				Sandbox.play();
+				//song.play();
 			}
 		}
+		window.addEventListener("keydown", function(e){
+			e = e || window.event;
+			if (e.keyCode==32) toggleGame(); // spacebar
+		}, true);
+
+		// instructions
+		var showInstructions = true;
+		function toggleInstructions() {
+			showInstructions = !showInstructions;
+			if (showInstructions) {
+				document.getElementById("instructions").style.display = "block";
+			} else {
+				document.getElementById("instructions").style.display = "none";
+			}
+		}
+		document.addEventListener("DOMContentLoaded", function(event) {
+			toggleInstructions();
+		});
+
+		// music
+		var song = new Audio('sounds/theme.m4a');
+		if(typeof song.loop == 'boolean') {
+			song.loop = true;
+		} else {
+			song.addEventListener('ended', function() {
+				this.currentTime = 0;
+				this.play();
+			}, false);
+		}
+		song.play();
+
+		var isPlaying = false;
+		function toggleSong() {
+			if(isPlaying) song.pause()
+			else song.play();
+		};
+		song.onplaying = function() { isPlaying = true; };
+		song.onpause = function() { isPlaying = false; };
 	</script>
 </head>
 <body>
 	<canvas id="canvas"></canvas>
 
-	<button id="tog-btn" onclick="toggleMenu()">menu</button>
-
-	<div id="my-sidemenu">
-		<button onclick="Sandbox.play()">play</button>
-		<button onclick="Sandbox.pause()">pause</button>
-
+	<div id="gui">
 		<div>
-			<h2>Black</h2>
+			<button onclick="toggleGame()">Play/Pause</button>
+		</div>
 
-			<div>
-				Create/Destroy:
-				<input type="number" value="1" id="black-num">
-				<button id="black-create" onclick="Sandbox.createVehicle('Black')">+</button>
-				<button id="black-destroy" onclick="destroyVehicle('Black')">-</button>
-			</div>
+		<br>
+		<button onclick="toggleSong()">Toggle music</button>
 
-			<h3>Properties</h3>
-			<div>Max Speed: <input type="number" value="100" id="black-speed"></div>
-			<div>Max Force: <input type="number" value="5" id="black-force"></div>
-			<div>Size: <input type="number" value="7" id="black-size"></div>
-			<div>Vision: <input type="number" value="50" id="black-perception"></div>
-			<div>Elbow Room: <input type="number" value="10" id="black-leeway"></div>
+		<div id="score"></div>
 
-			<h3>Behaviors</h3>
-			<div>
-				<div>
-					<label>
-						<input type="checkbox" id="black-seek">
-						Seek:
-					</label>
-					<input type="number" value="100" id="black-seek-x">, <input type="number" value="100" id="black-seek-y">
-				</div>
-				<div>
-					<label>
-						<input type="checkbox" id="black-arrive">
-						Arrive:
-					</label>
-					<input type="number" value="100" id="black-arrive-x">, <input type="number" value="100" id="black-arrive-y">
-				</div>
-			</div>
+		<button onclick="Dragon.spawnRandom()">spawn dragon<br>(aka sadist mode)</button>
+
+		<br><br>
+		<button onclick="toggleInstructions()">Instructions</button>
+		<br>
+		<div id="instructions">
+			You: blue triangle<br>
+			Controls: arrow keys or wasd<br>
+			Enemy: dragons<br>
+			Goal: gold<br>
+			<br>
+
+			<b>If a dragon eats you, GAME OVER.</b><br>
+			Gold occasionally spawns randomly.<br>
+			Dragons love gold. They will compete with you for it.<br>
+			<b>If dragons collect the last gold, GAME OVER.</b><br>
+			If two dragons collide, they die and <b>drop their gold</b>.<br>
 		</div>
 	</div>
 

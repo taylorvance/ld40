@@ -1,7 +1,7 @@
 var assert = require('assert');
 
-var Vector = require("/Users/decisiontoolbox/dev/steering/vector");//.
-var Vehicle = require("/Users/decisiontoolbox/dev/steering/vehicle");//.
+var Vector = require("vector-js");
+var Vehicle = require("vehicle-js");
 var asdf = require("../main.js");//.
 
 describe('Vector', function() {

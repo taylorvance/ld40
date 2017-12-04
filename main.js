@@ -1,5 +1,5 @@
-var Vector = require("/Users/decisiontoolbox/dev/steering/vector");//.
-var Vehicle = require("/Users/decisiontoolbox/dev/steering/vehicle");//.
+var Vector = require("vector-js");
+var Vehicle = require("vehicle-js");
 
 
 //.is there a better way to access this from front end and unit tests?
@@ -53,6 +53,14 @@ Sandbox.createVehicle = function(vehicleSubclass, pos, vel) {
 
 	return vehicle;
 };
+Sandbox.destroyVehicle = function(vehicle) {
+	for (var i=0, len=Sandbox.vehicles.length; i<len; i++) {
+		if(Sandbox.vehicles[i] === vehicle) {
+			Sandbox.vehicles.splice(i, 1);
+			break;
+		}
+	}
+};
 
 
 var updateFns = [];
@@ -80,11 +88,14 @@ var update = function() {
 
 
 var intervalID;
+Sandbox.isPlaying = false;
 Sandbox.play = function() {
 	Sandbox.pause();
 	lastUpdate = Date.now();
 	intervalID = setInterval(update, 1000/FPS);
+	Sandbox.isPlaying = true;
 };
 Sandbox.pause = function() {
 	clearInterval(intervalID);
+	Sandbox.isPlaying = false;
 };
